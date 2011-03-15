@@ -6,11 +6,15 @@ javascript:var i,s,ss=['http://kathack.com/js/kh.js','http://ajax.googleapis.com
 
 */
 
-var debug_on = true;
+var debug_type = "title";
+var key_space_incr = 10;
+var key_time_incr = 50;
 
 function debug(s) {
-    if (debug_on) {
+    if (debug_type === "alert") {
         alert(s);
+    } else if (debug_type === "title") {
+        $("title").html(s);
     }
 };
 
@@ -500,13 +504,11 @@ function PlayerBall(parentNode, stickyNodes, ballOpts, sounds) {
     }
     
     this.updatePhysics = function () {
-        if (this.MOUSEB === 25) {
+        if (ballOpts.MOUSEB === 25) {
             
-            var key_space_incr = 50;
-
             var target_x = x;
             var target_y = y;
-        
+
             if (this.right) {
                 target_x += key_space_incr;
             }
@@ -520,8 +522,16 @@ function PlayerBall(parentNode, stickyNodes, ballOpts, sounds) {
                 target_y += key_space_incr;
             }
 
-            this.setAccelTarget(target_x, target_y);
+            if (this.right || this.left || this.up || this.down) {
+                accelTargetX = target_x;
+                accelTargetY = target_y;
+                accel = true;
+            } else {
+                accel = false;
+            }
         }
+
+        debug("(" + accelTargetX + ", " + accelTargetY + ")");
         
         var oldX = x, oldY = y, dx, dy,
             bounce = false,
@@ -537,6 +547,10 @@ function PlayerBall(parentNode, stickyNodes, ballOpts, sounds) {
         x += vx;
         y += vy;
         /* bounce ball on edges of document. */
+        var effective_radius = radius
+        if (ballOpts.MOUSEB === 25) {
+            effective_radius += key_space_incr;
+        }
         if (x - radius < 0) {
             bounce = true;
             x = radius + 1;
@@ -688,9 +702,6 @@ function Game(gameDiv, stickyNodes, ballOpts) {
     player1.setXY(300, 300);
     window.scrollTo(0, 200);
 
-    var key_mvmt_incr = 10;
-    var key_mvmt_delay = 10;
-    
     function on_resize() {
         player1.setDocSize(jQuery(document).width() - 5,
                            jQuery(document).height() - 5);
@@ -703,34 +714,32 @@ function Game(gameDiv, stickyNodes, ballOpts) {
         // move left
         if (e.keyCode === 37) {
             player1.left = pressed;
-            debug("setting left as " + pressed);
         }
 
         // move right
         if (e.keyCode === 39) {
             player1.right = pressed;
-            debug("setting right as " + pressed);
         }
 
         // move up
         if (e.keyCode === 38) {
             player1.up = pressed;
-            debug("setting up as " + pressed);
         }
 
         // move down
         if (e.keyCode === 40) {
             player1.down = pressed;
-            debug("setting down as " + pressed);
         }
     };
 
+    debug("Key time incr: " + key_time_incr);
+    
     function handleKeyDown(e) {
-        handleKeyUpadte(e, true);
+        handleKeyUpdate(e, true);
     }
     
     function handleKeyUp(e) {
-        handleKeyUpdate(e, false);
+        setTimeout(function () {handleKeyUpdate(e, false);}, key_time_incr);
     };
     
     if (ballOpts.MOUSEB === 25) {
@@ -743,10 +752,7 @@ function Game(gameDiv, stickyNodes, ballOpts) {
     function customPreventDefault(e) {
         if (e.keyCode === 37 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 40) {
             e.preventDefault();
-            debug("preventing default");
-        } else {
-            debug("not preventing default");
-        }
+        } 
     }
 
     /* touch events - always on? */
