@@ -6,7 +6,7 @@ javascript:var i,s,ss=['http://kathack.com/js/kh.js','http://ajax.googleapis.com
 
 */
 
-var debug_on = false;
+var debug_on = true;
 
 function debug(s) {
     if (debug_on) {
@@ -500,6 +500,29 @@ function PlayerBall(parentNode, stickyNodes, ballOpts, sounds) {
     }
     
     this.updatePhysics = function () {
+        if (this.MOUSEB === 25) {
+            
+            var key_space_incr = 50;
+
+            var target_x = x;
+            var target_y = y;
+        
+            if (this.right) {
+                target_x += key_space_incr;
+            }
+            if (this.left) {
+                target_x -= key_space_incr;
+            }
+            if (this.up) {
+                target_y -= key_space_incr;
+            }
+            if (this.down) {
+                target_y += key_space_incr;
+            }
+
+            this.setAccelTarget(target_x, target_y);
+        }
+        
         var oldX = x, oldY = y, dx, dy,
             bounce = false,
             accelTh;
@@ -666,7 +689,7 @@ function Game(gameDiv, stickyNodes, ballOpts) {
     window.scrollTo(0, 200);
 
     var key_mvmt_incr = 10;
-    var key_mvmt_delay = 25;
+    var key_mvmt_delay = 10;
     
     function on_resize() {
         player1.setDocSize(jQuery(document).width() - 5,
@@ -675,49 +698,55 @@ function Game(gameDiv, stickyNodes, ballOpts) {
     on_resize();
 
 
-    function handleKeyDown(e) {
-        var state = player1.getState();
-        var x = state.x;
-        var y = state.y;
+    function handleKeyUpdate(e, pressed) {
 
         // move left
         if (e.keyCode === 37) {
-            player1.setAccelTarget(x - key_mvmt_incr, y);
-            player1.setAccel(true);
-            debug("turned accel on");
+            player1.left = pressed;
+            debug("setting left as " + pressed);
         }
 
         // move right
         if (e.keyCode === 39) {
-            player1.setAccelTarget(x + key_mvmt_incr, y);
-            player1.setAccel(true);
-            debug("turned accel on");
+            player1.right = pressed;
+            debug("setting right as " + pressed);
         }
 
         // move up
         if (e.keyCode === 38) {
-            player1.setAccelTarget(x, y - key_mvmt_incr);
-            player1.setAccel(true);
-            debug("turned accel on");
+            player1.up = pressed;
+            debug("setting up as " + pressed);
         }
 
         // move down
         if (e.keyCode === 40) {
-            player1.setAccelTarget(x, y + key_mvmt_incr);
-            player1.setAccel(true);
-            debug("turned accel on");
+            player1.down = pressed;
+            debug("setting down as " + pressed);
         }
     };
 
+    function handleKeyDown(e) {
+        handleKeyUpadte(e, true);
+    }
+    
     function handleKeyUp(e) {
-        setTimeout(function() {player1.setAccel(false);}, key_mvmt_delay);
+        handleKeyUpdate(e, false);
     };
-
+    
     if (ballOpts.MOUSEB === 25) {
         document.addEventListener('keydown', handleKeyDown, true);
-        document.addEventListener('keydown', preventDefault, true);
+        document.addEventListener('keydown', customPreventDefault, true);
         document.addEventListener('keyup', handleKeyUp, true);
-        document.addEventListener('keyup', handleKeyUp, true);
+        document.addEventListener('keyup', customPreventDefault, true);
+    }
+
+    function customPreventDefault(e) {
+        if (e.keyCode === 37 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 40) {
+            e.preventDefault();
+            debug("preventing default");
+        } else {
+            debug("not preventing default");
+        }
     }
 
     /* touch events - always on? */
@@ -824,9 +853,9 @@ Katamari!</a></h1>\
 <button style="position:absolute;top:0;right:0;">X</button>\
 <p>Controls: Hold down <b><select id="mouseb">\
 <option value="0">Left-Click</option>\
-<option value="2" selected="selected">Right-Click</option>\
+<option value="2">Right-Click</option>\
 <option value="-5">Touch</option>\
-<option value="25">Arrow Keys</option>\
+<option value="25" selected="selected">Arrow Keys</option>\
 </select></b> to control the ball!</p>\
 <div><label>Background Music? \
 <input id="bgmusicc" type="checkbox" checked="checked" /></label></div>\
