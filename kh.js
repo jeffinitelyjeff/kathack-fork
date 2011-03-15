@@ -1,9 +1,19 @@
 /*
 Copyright Alex Leone, David Nufer, David Truong, 2011-03-11. kathack.com
+Modified by Jeff Ruberg to allow arrow key navigation.
 
 javascript:var i,s,ss=['http://kathack.com/js/kh.js','http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js'];for(i=0;i!=ss.length;i++){s=document.createElement('script');s.src=ss[i];document.body.appendChild(s);}void(0);
 
 */
+
+var debug_on = false;
+
+function debug(s) {
+    if (debug_on) {
+        alert(s);
+    }
+};
+
 var BORDER_STYLE = "1px solid #bbb",
     CSS_TRANSFORM = null,
     CSS_TRANSFORM_ORIGIN = null,
@@ -654,12 +664,61 @@ function Game(gameDiv, stickyNodes, ballOpts) {
     player1.init();
     player1.setXY(300, 300);
     window.scrollTo(0, 200);
+
+    var key_mvmt_incr = 10;
+    var key_mvmt_delay = 25;
     
     function on_resize() {
         player1.setDocSize(jQuery(document).width() - 5,
                            jQuery(document).height() - 5);
     }
     on_resize();
+
+
+    function handleKeyDown(e) {
+        var state = player1.getState();
+        var x = state.x;
+        var y = state.y;
+
+        // move left
+        if (e.keyCode === 37) {
+            player1.setAccelTarget(x - key_mvmt_incr, y);
+            player1.setAccel(true);
+            debug("turned accel on");
+        }
+
+        // move right
+        if (e.keyCode === 39) {
+            player1.setAccelTarget(x + key_mvmt_incr, y);
+            player1.setAccel(true);
+            debug("turned accel on");
+        }
+
+        // move up
+        if (e.keyCode === 38) {
+            player1.setAccelTarget(x, y - key_mvmt_incr);
+            player1.setAccel(true);
+            debug("turned accel on");
+        }
+
+        // move down
+        if (e.keyCode === 40) {
+            player1.setAccelTarget(x, y + key_mvmt_incr);
+            player1.setAccel(true);
+            debug("turned accel on");
+        }
+    };
+
+    function handleKeyUp(e) {
+        setTimeout(function() {player1.setAccel(false);}, key_mvmt_delay);
+    };
+
+    if (ballOpts.MOUSEB === 25) {
+        document.addEventListener('keydown', handleKeyDown, true);
+        document.addEventListener('keydown', preventDefault, true);
+        document.addEventListener('keyup', handleKeyUp, true);
+        document.addEventListener('keyup', handleKeyUp, true);
+    }
 
     /* touch events - always on? */
     document.addEventListener('touchstart', function (event) {
@@ -679,7 +738,7 @@ function Game(gameDiv, stickyNodes, ballOpts) {
         }
     }, true);
     
-    if (ballOpts.MOUSEB !== -5) {
+    if (ballOpts.MOUSEB === 0 || ballOpts.MOUSEB === 2) {
         /* mouse buttons */
         document.addEventListener('mousemove', function (event) {
             player1.setAccelTarget(event.pageX, event.pageY);
@@ -767,6 +826,7 @@ Katamari!</a></h1>\
 <option value="0">Left-Click</option>\
 <option value="2" selected="selected">Right-Click</option>\
 <option value="-5">Touch</option>\
+<option value="25">Arrow Keys</option>\
 </select></b> to control the ball!</p>\
 <div><label>Background Music? \
 <input id="bgmusicc" type="checkbox" checked="checked" /></label></div>\
